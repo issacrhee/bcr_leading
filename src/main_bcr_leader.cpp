@@ -337,7 +337,7 @@ int main(int argc, char *argv[])
                         if(off_counting)
                         {
                             // Timeout occurred
-                            std::cout << "No data received within 1 seconds." << std::endl;
+                            std::cout << "No data received within 2 seconds." << std::endl;
 
                             auto now = std::chrono::high_resolution_clock::now();
                             std::chrono::duration<double> elapsed_seconds = now - off_start;
@@ -357,7 +357,12 @@ int main(int argc, char *argv[])
                             // After 5 seconds, perform other actions or reset
                             if (ttime_bst >= 2 && prev_msg != 9) 
                             {
-                                std::cout << "1 seconds have passed.\n";
+                                // barcode trigger off
+                                std::string trigger_command = "||>trigger off\r\n";
+                                send(sock, trigger_command.c_str(), trigger_command.length(), 0);
+                               
+
+                                std::cout << "2 seconds have passed.\n";
                                 counting = false;  // Stop the timer
                                 off_counting = false; 
                                 bcr_leading::two msgp;
@@ -385,7 +390,7 @@ int main(int argc, char *argv[])
                             if(on_counting)
                             {
                                 // Timeout occurred
-                                std::cout << "Data received within 1 seconds." << std::endl;
+                                std::cout << "Data received within 2 seconds." << std::endl;
                                 auto now = std::chrono::high_resolution_clock::now();
                                 std::chrono::duration<double> elapsed_seconds = now - on_start;
                                 ttime = elapsed_seconds.count();
@@ -404,7 +409,7 @@ int main(int argc, char *argv[])
                                 // After 2 seconds, perform other actions or reset
                                 if (ttime >= 2 && prev_msg != 9) 
                                 {
-                                    std::cout << "1 seconds have passed.\n";
+                                    std::cout << "2 seconds have passed.\n";
                                     counting = false;  // Stop the timer
                                     on_counting = false;  // Stop the timer
 
