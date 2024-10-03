@@ -82,3 +82,7 @@ target_link_libraries(bcr_remote ${catkin_LIBRARIES} )
 add_executable(main_bcr_leader src/main_bcr_leader.cpp)
 add_dependencies(main_bcr_leader ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(main_bcr_leader ${catkin_LIBRARIES} )
+
+add_executable(robot_main_bcr_leader src/robot_main_bcr_leader.cpp)
+add_dependencies(robot_main_bcr_leader ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(robot_main_bcr_leader ${catkin_LIBRARIES} )

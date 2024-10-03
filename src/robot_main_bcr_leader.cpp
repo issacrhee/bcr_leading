@@ -53,6 +53,8 @@ int msg_flag_101 = 0;
 int msg_flag_102 = 0;
 int prev_msg = 0;
 
+int valread = 0;
+
  int timer_running = 0;
 double ttimesec = 0;
 double time_start =0;
@@ -65,6 +67,7 @@ bool counting = false;        // To check if the timer is running
 bool on_counting = false;
 bool off_counting = false;
 
+int buf_flag = 0;
 
 void bcr_oepration(int op_mode);
 
@@ -86,10 +89,13 @@ void msgCallbackcmd(const bcr_leading::four::ConstPtr &msg)
 
     prv_mode = -1;
     prev_msg = 0;
-    detect_flag = 0;
     counting = false; 
     on_counting = false; 
     off_counting = false;
+
+    valread = 0;
+    buf_flag = 0;
+
      ttime = 0;
      ttime_st = 0;
      ttime_bst = 0;
@@ -275,58 +281,43 @@ int main(int argc, char *argv[])
 
         if(bcr_mode == 1)
         {   
-            if (!counting) {
-                // Start the timer when '1' is received for the first time
-                start = std::chrono::high_resolution_clock::now();
-                counting = true;
-                std::cout << "Timer started/reset.\n";
-            } 
-
-            // // Data is available to read
-            //     memset(buffer, 0, sizeof(buffer));
-            //     int valread = read(sock, buffer, 1024);
-            //     if (valread > 0) {
-            //         std::cout << "Server response: " << buffer << std::endl;
-            //     } else {
-            //         std::cerr << "Read error or connection closed by server." << std::endl;
-            //     }
-
-            // Wait for activity on the socket
-            //int activity = select(sock + 1, &read_fds, NULL, NULL, &timeout);
-
-
-            //step - 1 bcr success??           
-         if (counting) 
-            {
-                // Data is available to read
-                    memset(buffer, 0, sizeof(buffer));
-                    int valread = read(sock, buffer, 1024);
-                    if (valread > 0) {
-                        std::cout << "Server response: " << buffer << std::endl;
-                    } else {
-                        std::cerr << "Read error or connection closed by server." << std::endl;
-                    }
-                    auto now = std::chrono::high_resolution_clock::now();
-                    std::chrono::duration<double> elapsed_seconds = now - start;
-                    ttime_st = elapsed_seconds.count();
-
-                if(ttime_st>3 )
-                {   
-                    detect_flag = 0;
-                }
-                    
-                    
-                else if(ttime_st<=3 && valread>0 &&strlen(buffer)>2 && buffer[0] != '?' && buffer[1] != '?')
-                {
-                    detect_flag = 1;
-                }
-                
-        
-
-                //step - 2 operation each case
                 if(detect_flag == 0)
                 {
-                    if (!off_counting) 
+                    memset(buffer, 0, sizeof(buffer));
+                    valread = read(sock, buffer, 1024);
+                    if (valread > 0) {
+                        std::cout << "Server response: " << buffer << std::endl;
+                        buf_flag = 1;
+                    } else {
+                        std::cerr << "Read error or connection closed by server." << std::endl;
+                        buf_flag = 0;
+                    }
+                }                   
+ 
+                    
+                if(buf_flag>0 && strlen(buffer)>2 && buffer[0] != '?' && buffer[1] != '?')
+                {
+                    detect_flag = 1;
+                    
+                }
+                
+                else
+                {
+                    detect_flag = 0;
+                    
+                }
+
+              
+            
+            
+        }
+
+        else if(bcr_mode==2)
+        {
+            //step - 2 operation each case
+                if(detect_flag == 0)
+                {
+                 if (!off_counting) 
                         {
                             // Start the timer when '1' is received for the first time
                             off_start = std::chrono::high_resolution_clock::now();
@@ -336,8 +327,12 @@ int main(int argc, char *argv[])
 
                         if(off_counting)
                         {
-                            // Timeout occurred
-                            std::cout << "No data received within 2 seconds." << std::endl;
+                            //  // barcode trigger off
+                            //     std::string trigger_command = "||>trigger off\r\n";
+                            //     send(sock, trigger_command.c_str(), trigger_command.length(), 0);
+                               
+                            // // Timeout occurred
+                            // std::cout << "No data received within 2 seconds." << std::endl;
 
                             auto now = std::chrono::high_resolution_clock::now();
                             std::chrono::duration<double> elapsed_seconds = now - off_start;
@@ -357,14 +352,11 @@ int main(int argc, char *argv[])
                             // After 5 seconds, perform other actions or reset
                             if (ttime_bst >= 2 && prev_msg != 9) 
                             {
-                                // barcode trigger off
-                                std::string trigger_command = "||>trigger off\r\n";
-                                send(sock, trigger_command.c_str(), trigger_command.length(), 0);
                                
 
                                 std::cout << "2 seconds have passed.\n";
                                 counting = false;  // Stop the timer
-                                off_counting = false; 
+                                // off_counting = false; 
                                 bcr_leading::two msgp;
                                 msgp.a = 9; // mode num
                                 msgp.b = 0; // 
@@ -374,12 +366,14 @@ int main(int argc, char *argv[])
                                 bcr_mode = 0; // stanby
                             }
                         }
+
+                                                
                 }
 
                 else if(detect_flag == 1)
                 {
                            
-                            if (!on_counting) 
+                 if (!on_counting) 
                             {
                                 // Start the timer when '1' is received for the first time
                                 on_start = std::chrono::high_resolution_clock::now();
@@ -411,7 +405,7 @@ int main(int argc, char *argv[])
                                 {
                                     std::cout << "2 seconds have passed.\n";
                                     counting = false;  // Stop the timer
-                                    on_counting = false;  // Stop the timer
+                                    // on_counting = false;  // Stop the timer
 
                                     bcr_leading::two msgp;
                                     msgp.a = 9; // mode num
@@ -426,9 +420,6 @@ int main(int argc, char *argv[])
 
                         
                 }
-              
-            }
-            
         }
         else
         {
